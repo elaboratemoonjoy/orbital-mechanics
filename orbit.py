@@ -1,8 +1,11 @@
+from typing import TYPE_CHECKING
+
 from numpy import sqrt
 from pygame import Surface, Vector2, draw
 
-from gravity_body import GravityBody
-from sattelite import Sattelite
+if TYPE_CHECKING:
+    from planet import GravityBody
+    from satellite import Sattelite
 from scipy import constants
 
 
@@ -27,7 +30,7 @@ class Orbit():
         ab = ab.normalize()
         return ab
 
-    def visualize(self):
+    def draw(self):
         draw.line(self.screen, "green", self.body.position, self.sattelite.position)
         draw.line(self.screen, "blue", self.sattelite.position, self.sattelite.position + self.sattelite.velocity)
 
