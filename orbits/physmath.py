@@ -25,7 +25,7 @@ def gravity_accel(body_mass, radius) -> float:
     return (G*body_mass)/math.pow(meters_from_center, 2)
 
 
-def gravity_kick(body_mass, body_vector, radius: Vector2, dt = 1):
+def gravity_kick(body_mass, gravity_vector, radius: Vector2, delta_time = 1):
     """
     Time based application of :func:`gravity_accel`
 
@@ -40,10 +40,7 @@ def gravity_kick(body_mass, body_vector, radius: Vector2, dt = 1):
   
     """
     
-    if not body_vector.is_normalized():
-        raise ValueError("'body_vector' must be a normalized 2d vector")
-
-    return gravity_accel(body_mass, radius) * body_vector * dt
+    return gravity_accel(body_mass, radius) * gravity_vector * delta_time
 
 
 def calculate_needed_orbital_velocity(gravity, radius):
