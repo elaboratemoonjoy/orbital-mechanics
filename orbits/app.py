@@ -3,8 +3,64 @@ import time
 
 import pygame
 from pygame import Vector2
-from . import physmath
 from array import array
+
+from scipy.constants import G
+
+
+EARTH_MASS_KG = 5.9722e24 
+EARTH_RADIUS_M = 6371 * 1000
+
+
+def gravity_accel(body_mass, radius) -> float:
+    """
+    a = GM/r²
+
+    Args
+        :param float body_mass: The mass of the orbital center in Kg (single point approximation)
+        :param float body_radius: Radius from center of body in meters (assuming perfect sphere)
+        
+    Returns:
+        float: gravitational acceleration produced by body as a scalar of m/s²
+  
+    """
+    
+    meters_from_center = (radius)
+
+    return (G*body_mass)/math.pow(meters_from_center, 2)
+
+
+def gravity_kick(body_mass, gravity_vector, radius: Vector2, delta_time = 1):
+    """
+    Time based application of :func:`gravity_accel`
+
+    Args
+        :param float body_mass: The mass of the orbital center in Kg (single point approximation)
+        :param float body_radius: Radius of body in meters (assuming perfect sphere)
+        :param float altitude: Height above surface in meters (assuming perfect sphere)
+        :param int dt: Delta time (change of time) since last kick in ms
+        
+    Returns:
+        float: gravitational acceleration produced by body as a scalar of m/s², scaled by delta time
+  
+    """
+    
+    return gravity_accel(body_mass, radius) * gravity_vector * delta_time
+
+
+def calculate_needed_orbital_velocity(gravity, radius):
+    """
+    v = sqrt(a*r)
+
+    Args
+        :param float gravity: The gravity effect at the given radius (a)
+        :param float radius: Radius of body in meters + altitude (assuming perfect sphere) (r)
+
+    Returns:
+        float: Required velocity in meters a second, for perfectly circular orbit 
+    """
+
+    return math.sqrt(gravity*radius)
 
 
 class Satellite():
@@ -17,7 +73,7 @@ class Satellite():
         Example:
             With a speed of 7469.361555002398 m/s at 400km altitude you will get a stable orbit
         """
-        self._position = Vector2(0, physmath.EARTH_RADIUS_M + start_altitude)
+        self._position = Vector2(0, EARTH_RADIUS_M + start_altitude)
         self._velocity = Vector2(start_speed, 0)
 
     @property
@@ -76,7 +132,7 @@ def main():
     satellite = Satellite(413*1000, 7672)
 
     earth_pixel_radius = 100
-    meters_per_pixel = physmath.EARTH_RADIUS_M / earth_pixel_radius
+    meters_per_pixel = EARTH_RADIUS_M / earth_pixel_radius
 
     fps = 60
     physics_hz = 1000 # Physics steps per second
@@ -120,8 +176,8 @@ def main():
 
             gravity_vector = (earth_pos - satellite.position).normalize()
 
-            grav_kick = physmath.gravity_kick(
-                body_mass = physmath.EARTH_MASS_KG,
+            grav_kick = gravity_kick(
+                body_mass = EARTH_MASS_KG,
                 gravity_vector = gravity_vector,
                 radius = earth_pos.distance_to(satellite.position),
                 delta_time = dt
