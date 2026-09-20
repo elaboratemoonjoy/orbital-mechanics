@@ -1,8 +1,8 @@
 import math
 import random
-
 import pygame
 from pygame import Vector2
+
 from orbits.body_models import PhysicsObject
 from orbits.physics import PhysicsEngine
 
@@ -12,15 +12,15 @@ WIDTH, HEIGHT = 1280, 720
 COLOR_BG_DARK = (0, 0, 5)
 
 star_colors = [
-    (216, 222, 236),  # B-Type (Blue-White)
-    (202, 215, 255),  # A-Type (Pure White)
-    (255, 191, 0),  # G-Type (Yellow)
+    (216, 222, 236),
+    (202, 215, 255),
+    (255, 191, 0),
 ]
 
 stars = [
     (
-        random.randint(0, WIDTH), 
-        random.randint(0, HEIGHT), 
+        random.randint(0, WIDTH),  # x coordinate
+        random.randint(0, HEIGHT),  # y coordinate
         random.randint(1, 2),  # size
         random.choice(star_colors),
         random.uniform(0.5, 2),  # twinkle speed
@@ -44,12 +44,17 @@ def draw_background(surface, current_time):
             sparkle_size = 1
 
         sparkle_colour = (
-            min(255, int(base_colour[0] * factor * 0.6)),
-            min(255, int(base_colour[1] * factor * 0.6)),
-            min(255, int(base_colour[2] * factor * 0.6)),
+            int(base_colour[0] * factor * 0.6),
+            int(base_colour[1] * factor * 0.6),
+            int(base_colour[2] * factor * 0.6),
         )
 
-        pygame.draw.circle(surface, sparkle_colour, (x, y), sparkle_size)
+        pygame.draw.circle(
+            surface=surface, 
+            color=sparkle_colour, 
+            center=(x, y), 
+            radius=sparkle_size
+        )
 
 
 class SimEngine():

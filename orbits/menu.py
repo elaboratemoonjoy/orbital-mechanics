@@ -1,6 +1,5 @@
 import math
 import random
-
 import pygame
 from pygame import Vector2
 import sys
@@ -12,21 +11,19 @@ from orbits.physics import LeapfrogVerlet, SympleticEuler
 WHITE = (255, 255, 255)
 LIGHT = (150, 150, 250)
 DARK = (100, 100, 200)
-BG = (60, 25, 60)
 COLOR_BG_DARK = (5, 2, 18)
 WIDTH, HEIGHT = 1280, 720
 
 star_colors = [
-    (216, 222, 236),  # B-Type (Blue-White)
-    (202, 215, 255),  # A-Type (Pure White)
-    (255, 191, 0),  # G-Type (Yellow)
+    (216, 222, 236),
+    (202, 215, 255),
+    (255, 191, 0),
 ]
-
 
 stars = [
     (
-        random.randint(0, WIDTH), 
-        random.randint(0, HEIGHT), 
+        random.randint(0, WIDTH),  # x coordinate
+        random.randint(0, HEIGHT),  # y coordinate
         random.randint(1, 5),  # size
         random.choice(star_colors),
         random.uniform(0.1, 0.5),  # twinkle speed
@@ -68,36 +65,43 @@ def draw_background(surface, current_time):
             sparkle_size = 1
 
         sparkle_colour = (
-            min(255, int(base_colour[0] * factor)),
-            min(255, int(base_colour[1] * factor)),
-            min(255, int(base_colour[2] * factor)),
+            int(base_colour[0] * factor),
+            int(base_colour[1] * factor),
+            int(base_colour[2] * factor),
         )
 
-        pygame.draw.circle(surface, sparkle_colour, (x, y), sparkle_size)
+        pygame.draw.circle(
+            surface=surface, 
+            color=sparkle_colour, 
+            center=(x, y), 
+            radius=sparkle_size
+        )
 
 
 def start_menu():
     pygame.init()
-    font = pygame.font.Font("orbits/fonts/OCRA.ttf", 32)
-
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Orbital simulator")
 
+    font = pygame.font.Font("orbits/assets/fonts/OCRA.ttf", 32)
+    icon = pygame.image.load("orbits/assets/icon.png")
+    pygame.display.set_icon(icon)
+
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        
+    buttons_width = 400
+    buttons_height = 55
+    buttons_left = WIDTH / 2 - buttons_width / 2 
+
+    sympletic_button = pygame.Rect(buttons_left, 220, buttons_width, buttons_height)
+    leapfrog_button = pygame.Rect(buttons_left, 290, buttons_width, buttons_height)
+    quit_button = pygame.Rect(buttons_left, 360, buttons_width, buttons_height)
+
     while True:
-
-        screen.fill(BG)
-        mouse = pygame.mouse.get_pos()
-
         current_time = pygame.time.get_ticks() / 1000.0
+        
         draw_background(screen, current_time)
 
-        buttons_width = 400
-        buttons_height = 55
-        buttons_left = WIDTH / 2 - buttons_width / 2 
-
-        sympletic_button = pygame.Rect(buttons_left, 220, buttons_width, buttons_height)
-        leapfrog_button = pygame.Rect(buttons_left, 290, buttons_width, buttons_height)
-        quit_button = pygame.Rect(buttons_left, 360, buttons_width, buttons_height)
+        mouse = pygame.mouse.get_pos()
 
         pygame.draw.rect(
             surface=screen, 
@@ -123,19 +127,24 @@ def start_menu():
         quit_text = font.render("Quit", True, WHITE)
 
         screen.blit(
-            sympletic_text, sympletic_text.get_rect(center=sympletic_button.center)
+            source=sympletic_text, 
+            dest=sympletic_text.get_rect(center=sympletic_button.center)
         )
-        screen.blit(leapfrog_text, leapfrog_text.get_rect(center=leapfrog_button.center))
-        screen.blit(quit_text, quit_text.get_rect(center=quit_button.center))
+        screen.blit(
+            source=leapfrog_text, 
+            dest=leapfrog_text.get_rect(center=leapfrog_button.center)
+        )
+        screen.blit(
+            source=quit_text, 
+            dest=quit_text.get_rect(center=quit_button.center)
+        )
 
         for event in pygame.event.get():
-
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-
                 if sympletic_button.collidepoint(mouse):
                     pygame.quit()
                     init_sim(SympleticEuler())
