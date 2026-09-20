@@ -1,9 +1,10 @@
 import math
-import time
+import sys
+import matplotlib.pyplot as plt
+import numpy as np
 
 import pygame
 from pygame import Vector2
-from array import array
 
 from scipy.constants import G
 
@@ -24,28 +25,38 @@ def gravity_accel(body_mass, radius) -> float:
         float: gravitational acceleration produced by body as a scalar of m/s²
   
     """
-    
-    meters_from_center = (radius)
 
-    return (G * body_mass) / math.pow(meters_from_center, 2)
+    return (G * body_mass) / math.pow(radius, 2)
 
 
-def gravity_kick(body_mass, gravity_vector, radius: Vector2, delta_time=1):
+def gravity_kick(
+        body_mass: float,
+        body_pos: Vector2, 
+        target_pos: Vector2, 
+        delta_time=1.0, 
+        scale_factor=1.0
+):
     """
     Time based application of :func:`gravity_accel`
 
     Args
         :param float body_mass: The mass of the orbital center in Kg (single point approximation)
-        :param float body_radius: Radius of body in meters (assuming perfect sphere)
-        :param float altitude: Height above surface in meters (assuming perfect sphere)
-        :param int dt: Delta time (change of time) since last kick in ms
+        :param vector2 body_pos: Position of orbital center as vector2
+        :param vector2 target_pos: Position of sattelite
+        :param float delta_time: Delta time (change of time) since last kick in ms
+        :param float scale_factor: How much of the gravity should be applied. For an example for leapfrog you do 0.5
         
     Returns:
         float: gravitational acceleration produced by body as a scalar of m/s², scaled by delta time
   
     """
-    
-    return gravity_accel(body_mass, radius) * gravity_vector * delta_time
+    gravity_vector = (body_pos - target_pos).normalize()
+
+    radius = body_pos.distance_to(target_pos)
+
+    a = gravity_accel(body_mass, radius)
+
+    return a * gravity_vector * delta_time * scale_factor
 
 
 def calculate_needed_orbital_velocity(gravity, radius):
@@ -71,7 +82,7 @@ class Satellite():
             :param float start_speed: Starting speed in meters a second (m/s)
 
         Example:
-            With a speed of 7469.361555002398 m/s at 400km altitude you will get a stable orbit
+            With a speed of 7672 m/s at 400km altitude you will get a stable (circular) orbit
         """
         self._position = Vector2(0, EARTH_RADIUS_M + start_altitude)
         self._velocity = Vector2(start_speed, 0)
@@ -117,82 +128,118 @@ class Satellite():
         self._position += self._velocity * delta_time
 
 
-def main():
+EARTH_PIXEL_RADIUS = 100  # scale for simulation graphics
+FPS = 60
+BASE_PHYSICS_HZ = 60  # Physics steps per second
+TIME_WARP = 10000  # Time speed up
+METERS_PER_PIXEL = EARTH_RADIUS_M / EARTH_PIXEL_RADIUS
 
-    angles = array('f')  # 'f' stores raw 32-bit floats
 
+def main(multiplier: int):
     pygame.init()
 
     screen = pygame.display.set_mode((1280, 720))
     clock = pygame.time.Clock()
+
+    pixel_center = Vector2(screen.get_width() / 2, screen.get_height() / 2)
+    satellite = Satellite(400 * 1000, 8672)
+
+    physics_hz = BASE_PHYSICS_HZ * multiplier
+    phys_dt = (1 / physics_hz) * TIME_WARP
+    phys_per_frame = range(int(physics_hz / FPS))
+
+    periapsis_angles = []
+    prev_distance = pixel_center.distance_to(satellite.position)
+    pos_at_periapsis = satellite.position
+    is_outbound = False
+
     running = True
-
-    pixel_center = Vector2(screen.get_width()/2, screen.get_height()/2)
-    earth_pos = Vector2(0, 0)
-    satellite = Satellite(413 * 1000, 7672)
-
-    earth_pixel_radius = 100
-    meters_per_pixel = EARTH_RADIUS_M / earth_pixel_radius
-
-    fps = 60
-    physics_hz = 1000  # Physics steps per second
-    physics_loop_per_frame = int(1 / fps * physics_hz)
-    time_warp = 1000 * physics_hz  # Time sped up
-
     while running:
-        # Start loop
-        clock.tick(fps)
+        clock.tick(FPS)
         screen.fill("black")
+
+        # physics loop
+        for _ in phys_per_frame:
+            # kick
+            kick = gravity_kick(
+                body_mass=EARTH_MASS_KG,
+                body_pos=Vector2(0, 0),
+                target_pos=satellite.position,
+                delta_time=phys_dt,
+                scale_factor=0.5
+            )
+            satellite.apply_gravity(kick)
+          
+            # coast
+            satellite.update_position(phys_dt)
+
+            # kick
+            kick = gravity_kick(
+                body_mass=EARTH_MASS_KG,
+                body_pos=Vector2(0, 0),
+                target_pos=satellite.position,
+                delta_time=phys_dt,
+                scale_factor=0.5
+            )
+            satellite.apply_gravity(kick)
+
+            current_distance = Vector2(0, 0).distance_to(satellite.position)
+            if current_distance > prev_distance and not is_outbound:
+                angle_rad = math.atan2(pos_at_periapsis.y - Vector2(0, 0).y, pos_at_periapsis.x - Vector2(0, 0).x)
+                periapsis_angles.append(math.degrees(angle_rad))
+                is_outbound = True
+
+            if current_distance < prev_distance:
+                is_outbound = False
+                pos_at_periapsis = satellite.position
+
+            prev_distance = current_distance
+
+        if len(periapsis_angles) == 200:
+            running = False
 
         # Draw objects
         pygame.draw.circle(
             screen, 
             pygame.Color("blue"), 
-            earth_pos + pixel_center,
-            earth_pixel_radius,
+            pixel_center,
+            EARTH_PIXEL_RADIUS,
             width=1
         )
         pygame.draw.circle(
             screen, 
             pygame.Color("green"), 
-            satellite.position / meters_per_pixel + pixel_center,
-            screen.get_height() / 200 # size
+            Vector2(
+                pixel_center.x + (satellite.position.x / METERS_PER_PIXEL),
+                pixel_center.y - (satellite.position.y / METERS_PER_PIXEL)
+            ),
+            screen.get_height() / 200  # size
         )
-
-        # Physics
-        start_time = time.perf_counter()
-        last_time = start_time
-        for _ in range(0, physics_loop_per_frame):
-            now = time.perf_counter()
-            dt = (now - last_time) * time_warp
-            last_time = now
-
-            if now - start_time > 1:
-                raise Exception("Can't keep up with physics frequency")
-
-            satellite.update_position(dt)
-
-            gravity_vector = (earth_pos - satellite.position).normalize()
-
-            grav_kick = gravity_kick(
-                body_mass=EARTH_MASS_KG,
-                gravity_vector=gravity_vector,
-                radius=earth_pos.distance_to(satellite.position),
-                delta_time=dt
-            )
-
-            satellite.apply_gravity(grav_kick)
+        pygame.display.flip()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-                with open("angles.bin", "wb") as f:
-                    angles.tofile(f)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+        
+    periapsis_angles = np.degrees(np.unwrap(np.radians(periapsis_angles)))
 
-        pygame.display.flip()
+    plt.plot(periapsis_angles, marker='o')
+    plt.xlabel("Orbit Number")
+    plt.ylabel("Periapsis Angle (Degrees)")
+    plt.title("Periapsis Angle per Orbit")
+    plt.grid(True)
+    plt.savefig(f"data/leap/Periapsis_angles_{multiplier}.png", dpi=300)
+
+    with open(f"data/leap/Periapsis_angles_{multiplier}.txt", "w") as f:
+        for index, periapsis in enumerate(periapsis_angles, start=1):
+            f.write(f"{index}, {periapsis}\n")
 
     pygame.quit()
 
 
 if __name__ == "__main__":
-    main()
+    # Default to 17 (1020 Hz) if no argument is provided
+    multiplier = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    main(multiplier)
