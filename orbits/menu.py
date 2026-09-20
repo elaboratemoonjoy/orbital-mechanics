@@ -4,7 +4,7 @@ import pygame
 from pygame import Vector2
 import sys
 
-from orbits.body_models import PhysicsObject
+from orbits.body_models import Body, PhysicsObject
 from orbits.engine import SimEngine
 from orbits.physics import LeapfrogVerlet, SympleticEuler
 
@@ -34,16 +34,18 @@ stars = [
 
 
 def init_sim(physics_engine):
+    earth_png = pygame.image.load('orbits/assets/sprites/earth.png')
+    moon_png = pygame.image.load('orbits/assets/sprites/moon.png')
     bodies = [
-        PhysicsObject(5.9722e24, 6371 * 1000, Vector2(0, 0), Vector2(0, 0)),
+        Body(5.9722e24, 6371 * 1000, Vector2(0, 0), Vector2(0, 0), earth_png),
         PhysicsObject(1000, 10, Vector2(0, (400 + 6371) * 1000), Vector2(8672, 0)),
-        PhysicsObject(7.342e22, 6371 * 1000, Vector2(0, (400000 + 6371) * 1000), Vector2(1000, 0)),
+        Body(7.342e22, 4000 * 1000, Vector2(0, (400000 + 6371) * 1000), Vector2(1000, 0), moon_png),
     ]
 
     engine = SimEngine(
         physics_engine=physics_engine,
         sim_bodies=bodies,
-        fps=60,
+        fps=120,
         time_warp=1000,
         physics_hz=60
     )

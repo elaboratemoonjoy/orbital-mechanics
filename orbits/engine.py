@@ -6,9 +6,8 @@ from pygame import Vector2
 from orbits.body_models import PhysicsObject
 from orbits.physics import PhysicsEngine
 
-FPS = 60
-METERS_PER_PIXEL = (6371 * 1000) / 5
-WIDTH, HEIGHT = 1280, 720
+METERS_PER_PIXEL = (6371 * 1000) / 8
+WIDTH, HEIGHT = 1920, 1080
 COLOR_BG_DARK = (0, 0, 5)
 
 star_colors = [
@@ -74,17 +73,25 @@ class SimEngine():
         self.running = False
 
     def start(self):
+
+        pygame.init()
         self.running = True
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         clock = pygame.time.Clock()
-        pixel_center = Vector2(screen.get_width() / 2, screen.get_height() / 2)
-        dt = (1 / self.physics_hz) * self.time_warp
+        
+        dt = (1 / self.fps) * self.time_warp
+        font = pygame.font.Font(None, 16)
 
         while self.running:
-            clock.tick(FPS)
+            clock.tick(self.fps)
 
             current_time = pygame.time.get_ticks() / 1000.0
             draw_background(screen, current_time)
+
+            text = f"{clock.get_fps():2.0f} FPS"
+            fps_text = font.render(text, False, (255, 255, 255))
+
+            screen.blit(fps_text, (20, 20))
 
             self.physics_engine.physics_loop(
                 dt=dt, 
@@ -93,17 +100,9 @@ class SimEngine():
             )
 
             for body in self.sim_bodies:
-                size = body.size / METERS_PER_PIXEL
-                if size < 1:
-                    size = 1
-                pygame.draw.circle(
+                body.draw(
                     screen, 
-                    pygame.Color("green"), 
-                    Vector2(
-                        pixel_center.x + (body.position.x / METERS_PER_PIXEL),
-                        pixel_center.y - (body.position.y / METERS_PER_PIXEL)
-                    ),
-                    size
+                    meters_per_pixel=METERS_PER_PIXEL
                 )
 
             pygame.display.flip()
