@@ -45,9 +45,9 @@ def init_sim(physics_engine):
     engine = SimEngine(
         physics_engine=physics_engine,
         sim_bodies=bodies,
-        fps=120,
+        fps=60,
         time_warp=1000,
-        physics_hz=60
+        physics_hz=120
     )
 
     engine.start()

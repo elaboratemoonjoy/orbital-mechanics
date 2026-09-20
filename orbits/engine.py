@@ -82,13 +82,17 @@ class SimEngine():
         dt = (1 / self.fps) * self.time_warp
         font = pygame.font.Font(None, 16)
 
+        expected_frametime = (1 / self.fps) * 1000
+
         while self.running:
-            clock.tick(self.fps)
+            frametime = clock.tick_busy_loop(self.fps)
 
             current_time = pygame.time.get_ticks() / 1000.0
             draw_background(screen, current_time)
 
             text = f"{clock.get_fps():2.0f} FPS"
+            if not frametime <= expected_frametime:
+                text += f" sim can't keep up {frametime}ms"
             fps_text = font.render(text, False, (255, 255, 255))
 
             screen.blit(fps_text, (20, 20))
