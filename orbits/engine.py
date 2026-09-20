@@ -75,6 +75,9 @@ class SimEngine():
     def start(self):
 
         pygame.init()
+        icon = pygame.image.load("orbits/assets/icon.png")
+        pygame.display.set_icon(icon)
+        
         self.running = True
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         clock = pygame.time.Clock()
