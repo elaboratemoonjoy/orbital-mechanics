@@ -58,6 +58,37 @@ class PhysicsEngine():
         raise NotImplementedError()
 
 
+class ExplicitEuler(PhysicsEngine):
+    def __init__(self):
+        ...
+
+    def physics_loop(self, dt, physics_hz, bodies):
+        ticks_per_dt = physics_hz * (dt)
+        tick_dt = dt / ticks_per_dt
+        for _ in range(int(ticks_per_dt)):
+            kicks = {}
+
+            for cur_body in bodies:
+                accumulated_kick = Vector2(0, 0)
+                for target_body in bodies:
+                    if target_body is cur_body:
+                        continue
+                    
+                    kick = gravity_kick(
+                        body_mass=target_body.mass,
+                        body_pos=target_body.position,
+                        target_pos=cur_body.position,
+                        delta_time=tick_dt,
+                    )
+                    accumulated_kick += kick
+
+                kicks[cur_body] = accumulated_kick
+            
+            for cur_body in bodies:
+                cur_body.position += cur_body.velocity * tick_dt
+                cur_body.velocity += kicks[cur_body]
+
+
 class SympleticEuler(PhysicsEngine):
     def __init__(self):
         ...

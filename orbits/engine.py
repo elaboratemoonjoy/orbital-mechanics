@@ -1,7 +1,6 @@
 import math
 import random
 import pygame
-from pygame import Vector2
 
 from orbits.body_models import PhysicsObject
 from orbits.physics import PhysicsEngine
@@ -73,19 +72,26 @@ class SimEngine():
         self.running = False
 
     def start(self):
+        global METERS_PER_PIXEL
 
         pygame.init()
+        pygame.display.set_caption("Orbital simulator")
         icon = pygame.image.load("orbits/assets/icon.png")
         pygame.display.set_icon(icon)
-        
+
         self.running = True
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         clock = pygame.time.Clock()
-        
+        pixel_center = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
+        camera_offset = pygame.Vector2(0, 0)
+
         dt = (1 / self.fps) * self.time_warp
         font = pygame.font.Font(None, 16)
 
         expected_frametime = (1 / self.fps) * 1000
+
+        dragging = False
+        last_mouse_pos = None
 
         while self.running:
             frametime = clock.tick_busy_loop(self.fps)
@@ -100,6 +106,9 @@ class SimEngine():
 
             screen.blit(fps_text, (20, 20))
 
+            scale_text = f"Scale: {METERS_PER_PIXEL} meters/pixel"
+            screen.blit(font.render(scale_text, False, (255, 255, 255)), (20, 50))
+
             self.physics_engine.physics_loop(
                 dt=dt, 
                 physics_hz=self.physics_hz, 
@@ -109,12 +118,36 @@ class SimEngine():
             for body in self.sim_bodies:
                 body.draw(
                     screen, 
-                    meters_per_pixel=METERS_PER_PIXEL
+                    meters_per_pixel=METERS_PER_PIXEL,
+                    pixel_center=pixel_center + (camera_offset / METERS_PER_PIXEL) 
                 )
 
             pygame.display.flip()
 
             for event in pygame.event.get():
+                # Zoom
+                if event.type == pygame.MOUSEWHEEL:
+                    METERS_PER_PIXEL += event.y * 10000 * -1 
+                    if METERS_PER_PIXEL <= 21000:
+                        METERS_PER_PIXEL = 21000
+
+                # Drag screen
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        dragging = True
+                        last_mouse_pos = pygame.Vector2(event.pos)
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 1:
+                        dragging = False
+                elif event.type == pygame.MOUSEMOTION:
+                    if dragging:
+                        mouse_pos = pygame.Vector2(event.pos)
+                        delta = mouse_pos - last_mouse_pos
+
+                        camera_offset += delta * METERS_PER_PIXEL
+                        last_mouse_pos = mouse_pos
+
+                # Exit
                 if event.type == pygame.QUIT:
                     self.running = False
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:

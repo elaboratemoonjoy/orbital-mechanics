@@ -4,9 +4,9 @@ import pygame
 from pygame import Vector2
 import sys
 
-from orbits.body_models import Body, PhysicsObject
+from orbits.body_models import Body, PhysicsObject, Satellite
 from orbits.engine import SimEngine
-from orbits.physics import LeapfrogVerlet, SympleticEuler
+from orbits.physics import ExplicitEuler, LeapfrogVerlet, SympleticEuler
 
 WHITE = (255, 255, 255)
 LIGHT = (150, 150, 250)
@@ -38,7 +38,7 @@ def init_sim(physics_engine):
     moon_png = pygame.image.load('orbits/assets/sprites/moon.png')
     bodies = [
         Body(5.9722e24, 6371 * 1000, Vector2(0, 0), Vector2(0, 0), earth_png),
-        PhysicsObject(1000, 10, Vector2(0, (400 + 6371) * 1000), Vector2(8672, 0)),
+        Satellite(1000, 10, Vector2(0, (400 + 6371) * 1000), Vector2(8672, 0)),
         Body(7.342e22, 4000 * 1000, Vector2(0, (400000 + 6371) * 1000), Vector2(1000, 0), moon_png),
     ]
 
@@ -94,9 +94,10 @@ def start_menu():
     buttons_height = 55
     buttons_left = WIDTH / 2 - buttons_width / 2 
 
-    sympletic_button = pygame.Rect(buttons_left, 220, buttons_width, buttons_height)
-    leapfrog_button = pygame.Rect(buttons_left, 290, buttons_width, buttons_height)
-    quit_button = pygame.Rect(buttons_left, 360, buttons_width, buttons_height)
+    explicit_button = pygame.Rect(buttons_left, 220, buttons_width, buttons_height)
+    sympletic_button = pygame.Rect(buttons_left, 290, buttons_width, buttons_height)
+    leapfrog_button = pygame.Rect(buttons_left, 360, buttons_width, buttons_height)
+    quit_button = pygame.Rect(buttons_left, 430, buttons_width, buttons_height)
 
     while True:
         current_time = pygame.time.get_ticks() / 1000.0
@@ -105,6 +106,12 @@ def start_menu():
 
         mouse = pygame.mouse.get_pos()
 
+        pygame.draw.rect(
+            surface=screen, 
+            color=LIGHT if explicit_button.collidepoint(mouse) else DARK, 
+            rect=explicit_button, 
+            border_radius=10
+        )
         pygame.draw.rect(
             surface=screen, 
             color=LIGHT if sympletic_button.collidepoint(mouse) else DARK, 
@@ -124,10 +131,15 @@ def start_menu():
             border_radius=10
         )
 
+        explicit_text = font.render("Explicit Euler", True, WHITE)
         sympletic_text = font.render("Symplectic Euler", True, WHITE)
         leapfrog_text = font.render("Leapfrog Verlet", True, WHITE)
         quit_text = font.render("Quit", True, WHITE)
 
+        screen.blit(
+            source=explicit_text, 
+            dest=explicit_text.get_rect(center=explicit_button.center)
+        )
         screen.blit(
             source=sympletic_text, 
             dest=sympletic_text.get_rect(center=sympletic_button.center)
@@ -147,6 +159,11 @@ def start_menu():
                 sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
+                if explicit_button.collidepoint(mouse):
+                    pygame.quit()
+                    init_sim(ExplicitEuler())
+                    sys.exit()
+
                 if sympletic_button.collidepoint(mouse):
                     pygame.quit()
                     init_sim(SympleticEuler())
