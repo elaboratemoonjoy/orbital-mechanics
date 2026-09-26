@@ -1,28 +1,9 @@
-import math
-
 from line_profiler import profile
 from pygame import Vector2
-from scipy.constants import G
-
-
-def gravity_accel(body_mass, radius) -> float:
-    """
-    a = GM/r²
-
-    Args
-        :param float body_mass: The mass of the orbital center in Kg (single point approximation)
-        :param float body_radius: Radius from center of body in meters (assuming perfect sphere)
-        
-    Returns:
-        float: gravitational acceleration produced by body as a scalar of m/s²
-
-    """
-
-    return G * body_mass / (radius * radius)
 
 
 def gravity_kick(
-        body_mass: float,
+        body_grav_param: float,
         body_pos: Vector2, 
         target_pos: Vector2, 
         delta_time=1.0, 
@@ -46,7 +27,7 @@ def gravity_kick(
 
     radius = body_pos.distance_to(target_pos)
 
-    a = gravity_accel(body_mass, radius)
+    a = body_grav_param / (radius * radius)
 
     return a * (direction_vector / radius) * delta_time * scale_factor
 
@@ -76,7 +57,7 @@ class ExplicitEuler(PhysicsEngine):
                         continue
                     
                     kick = gravity_kick(
-                        body_mass=target_body.mass,
+                        body_grav_param=target_body.grav_param,
                         body_pos=target_body.position,
                         target_pos=cur_body.position,
                         delta_time=tick_dt,
@@ -98,16 +79,16 @@ class SympleticEuler(PhysicsEngine):
         ticks_per_dt = physics_hz * (dt)
         tick_dt = dt / ticks_per_dt
         for _ in range(int(ticks_per_dt)):
-            for cur_body in bodies:
-                for target_body in bodies:
-                    if target_body is not cur_body:
-                        kick = gravity_kick(
-                            body_mass=target_body.mass,
+
+            for i, cur_body in enumerate(bodies):
+                for j, target_body in enumerate(bodies):
+                    if i != j:
+                        cur_body.velocity += gravity_kick(
+                            body_grav_param=target_body.grav_param,
                             body_pos=target_body.position,
                             target_pos=cur_body.position,
                             delta_time=tick_dt,
                         )
-                        cur_body.velocity += kick
                 
                 cur_body.position += cur_body.velocity * tick_dt
 
@@ -122,7 +103,7 @@ class LeapfrogVerlet(PhysicsEngine):
                 continue
 
             kick = gravity_kick(
-                body_mass=target_body.mass,
+                body_grav_param=target_body.grav_param,
                 body_pos=target_body.position,
                 target_pos=cur_body.position,
                 delta_time=tick_dt,

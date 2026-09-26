@@ -72,6 +72,7 @@ class SimEngine():
         self.physics_hz = physics_hz
         self.running = False
 
+    @profile
     def start(self):
         global METERS_PER_PIXEL
 
@@ -95,7 +96,7 @@ class SimEngine():
         last_mouse_pos = None
 
         while self.running:
-            frametime = clock.tick_busy_loop(self.fps)
+            frametime = clock.tick(self.fps)
 
             current_time = pygame.time.get_ticks() / 1000.0
             draw_background(screen, current_time)
