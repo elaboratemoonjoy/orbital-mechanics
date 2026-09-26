@@ -1,5 +1,6 @@
 import math
 
+from line_profiler import profile
 from pygame import Vector2
 from scipy.constants import G
 
@@ -17,7 +18,7 @@ def gravity_accel(body_mass, radius) -> float:
 
     """
 
-    return (G * body_mass) / math.pow(radius, 2)
+    return G * body_mass / (radius * radius)
 
 
 def gravity_kick(
@@ -41,13 +42,13 @@ def gravity_kick(
         float: gravitational acceleration produced by body as a scalar of m/s², scaled by delta time
 
     """
-    gravity_vector = (body_pos - target_pos).normalize()
+    direction_vector = body_pos - target_pos
 
     radius = body_pos.distance_to(target_pos)
 
     a = gravity_accel(body_mass, radius)
 
-    return a * gravity_vector * delta_time * scale_factor
+    return a * (direction_vector / radius) * delta_time * scale_factor
 
 
 class PhysicsEngine():
@@ -99,16 +100,14 @@ class SympleticEuler(PhysicsEngine):
         for _ in range(int(ticks_per_dt)):
             for cur_body in bodies:
                 for target_body in bodies:
-                    if target_body is cur_body:
-                        continue
-                    
-                    kick = gravity_kick(
-                        body_mass=target_body.mass,
-                        body_pos=target_body.position,
-                        target_pos=cur_body.position,
-                        delta_time=tick_dt,
-                    )
-                    cur_body.velocity += kick
+                    if target_body is not cur_body:
+                        kick = gravity_kick(
+                            body_mass=target_body.mass,
+                            body_pos=target_body.position,
+                            target_pos=cur_body.position,
+                            delta_time=tick_dt,
+                        )
+                        cur_body.velocity += kick
                 
                 cur_body.position += cur_body.velocity * tick_dt
 

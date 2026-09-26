@@ -1,5 +1,6 @@
 import math
 import random
+from line_profiler import profile
 import pygame
 
 from orbits.body_models import PhysicsObject

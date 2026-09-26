@@ -162,17 +162,17 @@ def start_menu():
                 if explicit_button.collidepoint(mouse):
                     pygame.quit()
                     init_sim(ExplicitEuler())
-                    sys.exit()
+                    return
 
                 if sympletic_button.collidepoint(mouse):
                     pygame.quit()
                     init_sim(SympleticEuler())
-                    sys.exit()
-
+                    return
+                
                 if leapfrog_button.collidepoint(mouse):
                     pygame.quit()
                     init_sim(LeapfrogVerlet())
-                    sys.exit()
+                    return
 
                 if quit_button.collidepoint(mouse):
                     pygame.quit()
