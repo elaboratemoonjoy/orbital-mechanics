@@ -87,7 +87,7 @@ class SimEngine():
         pixel_center = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
         camera_offset = pygame.Vector2(0, 0)
 
-        dt = (1 / self.fps) * self.time_warp
+        dt = 1 / self.fps
         font = pygame.font.Font(None, 16)
 
         expected_frametime = (1 / self.fps) * 1000
@@ -114,7 +114,8 @@ class SimEngine():
             self.physics_engine.physics_loop(
                 dt=dt, 
                 physics_hz=self.physics_hz, 
-                bodies=self.sim_bodies
+                bodies=self.sim_bodies,
+                time_warp=self.time_warp
             )
 
             for body in self.sim_bodies:

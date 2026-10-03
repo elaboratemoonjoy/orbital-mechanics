@@ -36,7 +36,7 @@ class PhysicsEngine():
     def __init__(self):
         ...
 
-    def physics_loop(self, dt, physics_hz, bodies):
+    def physics_loop(self, dt, physics_hz, bodies, time_warp):
         raise NotImplementedError()
 
 
@@ -44,9 +44,9 @@ class ExplicitEuler(PhysicsEngine):
     def __init__(self):
         ...
 
-    def physics_loop(self, dt, physics_hz, bodies):
-        ticks_per_dt = physics_hz * (dt)
-        tick_dt = dt / ticks_per_dt
+    def physics_loop(self, dt, physics_hz, bodies, time_warp):
+        ticks_per_dt = physics_hz * dt
+        tick_dt = (dt / ticks_per_dt) * time_warp
         for _ in range(int(ticks_per_dt)):
             kicks = {}
 
@@ -75,11 +75,10 @@ class SympleticEuler(PhysicsEngine):
     def __init__(self):
         ...
 
-    def physics_loop(self, dt, physics_hz, bodies):
-        ticks_per_dt = physics_hz * (dt)
-        tick_dt = dt / ticks_per_dt
+    def physics_loop(self, dt, physics_hz, bodies, time_warp):
+        ticks_per_dt = physics_hz * dt
+        tick_dt = (dt / ticks_per_dt) * time_warp
         for _ in range(int(ticks_per_dt)):
-
             for i, cur_body in enumerate(bodies):
                 for j, target_body in enumerate(bodies):
                     if i != j:
@@ -89,7 +88,8 @@ class SympleticEuler(PhysicsEngine):
                             target_pos=cur_body.position,
                             delta_time=tick_dt,
                         )
-                
+                            
+            for cur_body in bodies:
                 cur_body.position += cur_body.velocity * tick_dt
 
 
@@ -111,9 +111,9 @@ class LeapfrogVerlet(PhysicsEngine):
             )
             cur_body.velocity += kick
 
-    def physics_loop(self, dt, physics_hz, bodies):
+    def physics_loop(self, dt, physics_hz, bodies, time_warp):
         ticks_per_dt = physics_hz * (dt)
-        tick_dt = dt / ticks_per_dt
+        tick_dt = (dt / ticks_per_dt) * time_warp
         for _ in range(int(ticks_per_dt)):
 
             for cur_body in bodies:

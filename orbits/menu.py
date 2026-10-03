@@ -4,7 +4,7 @@ import pygame
 from pygame import Vector2
 import sys
 
-from orbits.body_models import Body, PhysicsObject, Satellite
+from orbits.body_models import Body, Satellite
 from orbits.engine import SimEngine
 from orbits.physics import ExplicitEuler, LeapfrogVerlet, SympleticEuler
 
@@ -13,6 +13,8 @@ LIGHT = (150, 150, 250)
 DARK = (100, 100, 200)
 COLOR_BG_DARK = (5, 2, 18)
 WIDTH, HEIGHT = 1280, 720
+
+RUNNING = True
 
 star_colors = [
     (216, 222, 236),
@@ -38,7 +40,7 @@ def init_sim(physics_engine):
     moon_png = pygame.image.load('orbits/assets/sprites/moon.png')
     bodies = [
         Body(5.9722e24, 6371 * 1000, Vector2(0, 0), Vector2(0, 0), earth_png),
-        Satellite(1000, 10, Vector2(0, (400 + 6371) * 1000), Vector2(8672, 0)),
+        Satellite(1000, 10, Vector2(0, (400 + 6371) * 1000), Vector2(7672, 0)),
         Body(7.342e22, 4000 * 1000, Vector2(0, (400000 + 6371) * 1000), Vector2(1000, 0), moon_png),
     ]
 
@@ -46,8 +48,8 @@ def init_sim(physics_engine):
         physics_engine=physics_engine,
         sim_bodies=bodies,
         fps=60,
-        time_warp=1000,
-        physics_hz=30
+        time_warp=30000,
+        physics_hz=1080
     )
 
     engine.start()
@@ -81,6 +83,7 @@ def draw_background(surface, current_time):
 
 
 def start_menu():
+    global RUNNING
     pygame.init()
     pygame.display.set_caption("Orbital simulator")
 
@@ -155,6 +158,7 @@ def start_menu():
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                RUNNING = False
                 pygame.quit()
                 sys.exit()
 
@@ -175,10 +179,12 @@ def start_menu():
                     return
 
                 if quit_button.collidepoint(mouse):
+                    RUNNING = False
                     pygame.quit()
                     sys.exit()
 
         pygame.display.update()
 
 
-start_menu()
+while RUNNING:
+    start_menu()
