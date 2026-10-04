@@ -36,11 +36,20 @@ stars = [
 
 
 def init_sim(physics_engine):
+
     earth_png = pygame.image.load('orbits/assets/sprites/earth.png')
     moon_png = pygame.image.load('orbits/assets/sprites/moon.png')
     bodies = [
         Body(5.9722e24, 6371 * 1000, Vector2(0, 0), Vector2(0, 0), earth_png),
-        Satellite(1000, 10, Vector2(0, (400 + 6371) * 1000), Vector2(7672, 0)),
+        Satellite(1000, 10, Vector2(((400 + 6371) * 1000), 0), Vector2(0, 8672)),
+        Satellite(1000, 10, Vector2((140000 + 6371) * 1000 * -1, 0), Vector2(30, 1990)),
+        Satellite(1000, 10, Vector2(0, (401 + 6371) * 1000), Vector2(10672, 0)),
+        # Satellite(1000, 10, Vector2(((260000 + 6371) * 1000),  45000000), Vector2(-900,  1100)),
+        # Satellite(1000, 10, Vector2(-((320000 + 6371) * 1000),  80000000), Vector2(700,  1250)),
+        # Satellite(1000, 10, Vector2(100000000, -((280000 + 6371) * 1000)), Vector2(1050, 500)),
+        # Satellite(1000, 10, Vector2(-((390000 + 6371) * 1000), -35000000), Vector2(-500, -900)),
+        # Satellite(1000, 10, Vector2(55000000, ((340000 + 6371) * 1000)), Vector2(-1200, 700)),
+        # Satellite(1000, 10, Vector2(-85000000, -((300000 + 6371) * 1000)), Vector2(900, -650)),
         Body(7.342e22, 4000 * 1000, Vector2(0, (400000 + 6371) * 1000), Vector2(1000, 0), moon_png),
     ]
 
@@ -48,9 +57,12 @@ def init_sim(physics_engine):
         physics_engine=physics_engine,
         sim_bodies=bodies,
         fps=60,
-        time_warp=30000,
-        physics_hz=1080
+        time_warp=15360,
+        physics_hz=480
     )
+    # time_warp=307200,
+    # physics_hz=3840
+
 
     engine.start()
 
